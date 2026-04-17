@@ -24,7 +24,7 @@ def escape_braces(text: str) -> str:
     This allows curly braces to be used in a string template without being interpreted
     as format specifiers.
     """
-    return text.replace("{", "{{").replace("}", "}}")
+    pass
 
 
 class BaseChatPromptFunction(Generic[P, R]):
@@ -56,29 +56,19 @@ class BaseChatPromptFunction(Generic[P, R]):
 
     @property
     def functions(self) -> list[Callable[..., Any]]:
-        return self._functions.copy()
+        pass
 
     @property
     def model(self) -> ChatModel:
-        if self._max_retries:
-            return RetryChatModel(
-                chat_model=self._model or get_chat_model(),
-                max_retries=self._max_retries,
-            )
-        return self._model or get_chat_model()
+        pass
 
     @property
     def return_types(self) -> list[type[R]]:
-        return self._return_types.copy()
+        pass
 
     def format(self, *args: P.args, **kwargs: P.kwargs) -> list[Message[Any]]:
         """Format the message templates with the given arguments."""
-        bound_args = self._signature.bind(*args, **kwargs)
-        bound_args.apply_defaults()
-        return [
-            message_template.format(**bound_args.arguments)
-            for message_template in self._messages
-        ]
+        pass
 
 
 class ChatPromptFunction(BaseChatPromptFunction[P, R], Generic[P, R]):
@@ -173,38 +163,4 @@ def chatprompt(
     >>> get_movie_quote("Iron Man")
     Quote(quote='I am Iron Man.', character='Tony Stark')
     """
-
-    def decorator(
-        func: Callable[P, Awaitable[R]] | Callable[P, R],
-    ) -> AsyncChatPromptFunction[P, R] | ChatPromptFunction[P, R]:
-        func_signature = inspect.signature(func)
-
-        if inspect.iscoroutinefunction(func):
-            async_prompt_function = AsyncChatPromptFunction[P, R](
-                name=func.__name__,
-                parameters=list(func_signature.parameters.values()),
-                return_type=func_signature.return_annotation,
-                messages=messages,
-                functions=functions,
-                stop=stop,
-                max_retries=max_retries,
-                model=model,
-            )
-            return cast(
-                AsyncChatPromptFunction[P, R],
-                update_wrapper(async_prompt_function, func),
-            )
-
-        prompt_function = ChatPromptFunction[P, R](
-            name=func.__name__,
-            parameters=list(func_signature.parameters.values()),
-            return_type=func_signature.return_annotation,
-            messages=messages,
-            functions=functions,
-            stop=stop,
-            max_retries=max_retries,
-            model=model,
-        )
-        return cast(ChatPromptFunction[P, R], update_wrapper(prompt_function, func))
-
-    return cast(ChatPromptDecorator, decorator)
+    pass

@@ -92,15 +92,7 @@ class OutputStream(Generic[ItemT, OutputT]):
     def _streamed_str(
         self, stream: Iterator[ItemT], current_item_ref: list[ItemT]
     ) -> Iterator[str]:
-        for item in stream:
-            if content := self._parser.get_content(item):
-                yield content
-            if self._parser.is_tool_call(item):
-                # TODO: Check if output types allow for early return and raise if not
-                assert not current_item_ref
-                current_item_ref.append(item)
-                return
-        self._exhausted = True
+        pass
 
     def _tool_call(
         self,
@@ -108,17 +100,7 @@ class OutputStream(Generic[ItemT, OutputT]):
         current_tool_call_ref: list[FunctionCallChunk],
         current_tool_call_id: str,
     ) -> Iterator[str]:
-        for item in stream:
-            # Only end the stream if we encounter a new tool call
-            # so that the whole stream is consumed including stop_reason/usage chunks
-            if item.id and item.id != current_tool_call_id:
-                # TODO: Check if output types allow for early return and raise if not
-                assert not current_tool_call_ref
-                current_tool_call_ref.append(item)
-                return
-            if item.args:
-                yield item.args
-        self._exhausted = True
+        pass
 
     def __stream__(self) -> Iterator[StreamedStr | OutputT]:
         # This works similarly to `itertools.groupby`
@@ -185,7 +167,7 @@ class OutputStream(Generic[ItemT, OutputT]):
 
     @property
     def usage_ref(self) -> list[Usage]:
-        return self._state.usage_ref
+        pass
 
 
 class AsyncOutputStream(Generic[ItemT, OutputT]):
@@ -216,15 +198,7 @@ class AsyncOutputStream(Generic[ItemT, OutputT]):
     async def _streamed_str(
         self, stream: AsyncIterator[ItemT], current_item_ref: list[ItemT]
     ) -> AsyncIterator[str]:
-        async for item in stream:
-            if content := self._parser.get_content(item):
-                yield content
-            if self._parser.is_tool_call(item):
-                # TODO: Check if output types allow for early return
-                assert not current_item_ref
-                current_item_ref.append(item)
-                return
-        self._exhausted = True
+        pass
 
     async def _tool_call(
         self,
@@ -232,15 +206,7 @@ class AsyncOutputStream(Generic[ItemT, OutputT]):
         current_tool_call_ref: list[FunctionCallChunk],
         current_tool_call_id: str,
     ) -> AsyncIterator[str]:
-        async for item in stream:
-            if item.id and item.id != current_tool_call_id:
-                # TODO: Check if output types allow for early return
-                assert not current_tool_call_ref
-                current_tool_call_ref.append(item)
-                return
-            if item.args:
-                yield item.args
-        self._exhausted = True
+        pass
 
     async def __stream__(self) -> AsyncIterator[AsyncStreamedStr | OutputT]:
         stream = aapply(self._state.update, self._stream)
@@ -307,4 +273,4 @@ class AsyncOutputStream(Generic[ItemT, OutputT]):
 
     @property
     def usage_ref(self) -> list[Usage]:
-        return self._state.usage_ref
+        pass

@@ -28,7 +28,7 @@ class _MistralOpenaiChatModel(OpenaiChatModel):
     """Modified OpenaiChatModel to be compatible with Mistral API."""
 
     def _get_stream_options(self) -> ChatCompletionStreamOptionsParam | openai.Omit:
-        return openai.omit
+        pass
 
     @staticmethod
     def _get_tool_choice(  # type: ignore[override]
@@ -41,14 +41,12 @@ class _MistralOpenaiChatModel(OpenaiChatModel):
         Mistral API has different options than the OpenAI API for `tool_choice`.
         See https://docs.mistral.ai/capabilities/function_calling/#tool_choice
         """
-        if contains_string_type(output_types):
-            return openai.omit
-        return _MistralToolChoice.ANY.value
+        pass
 
     def _get_parallel_tool_calls(
         self, *, tools_specified: bool, output_types: Iterable[type]
     ) -> bool | openai.Omit:
-        return openai.omit
+        pass
 
 
 class MistralChatModel(ChatModel):
@@ -78,27 +76,27 @@ class MistralChatModel(ChatModel):
 
     @property
     def model(self) -> str:
-        return self._mistral_openai_chat_model.model
+        pass
 
     @property
     def api_key(self) -> str | None:
-        return self._mistral_openai_chat_model.api_key
+        pass
 
     @property
     def base_url(self) -> str | None:
-        return self._mistral_openai_chat_model.base_url
+        pass
 
     @property
     def max_tokens(self) -> int | None:
-        return self._mistral_openai_chat_model.max_tokens
+        pass
 
     @property
     def seed(self) -> int | None:
-        return self._mistral_openai_chat_model.seed
+        pass
 
     @property
     def temperature(self) -> float | None:
-        return self._mistral_openai_chat_model.temperature
+        pass
 
     def complete(
         self,
@@ -109,12 +107,7 @@ class MistralChatModel(ChatModel):
         stop: list[str] | None = None,
     ) -> AssistantMessage[OutputT]:
         """Request an LLM message."""
-        return self._mistral_openai_chat_model.complete(
-            messages=messages,
-            functions=functions,
-            output_types=output_types,
-            stop=stop,
-        )
+        pass
 
     async def acomplete(
         self,
@@ -125,9 +118,4 @@ class MistralChatModel(ChatModel):
         stop: list[str] | None = None,
     ) -> AssistantMessage[OutputT]:
         """Async version of `complete`."""
-        return await self._mistral_openai_chat_model.acomplete(
-            messages=messages,
-            functions=functions,
-            output_types=output_types,
-            stop=stop,
-        )
+        pass

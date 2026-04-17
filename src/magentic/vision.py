@@ -31,6 +31,4 @@ class UserImageMessage(Message[ImageContentT], Generic[ImageContentT]):
         **kwargs: Any,
     ) -> "UserImageMessage[T]":
         """Format the message using the provided substitutions."""
-        if isinstance(self.content, Placeholder):
-            return UserImageMessage(self.content.format(**kwargs))
-        return UserImageMessage(self.content)
+        pass

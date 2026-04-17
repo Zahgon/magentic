@@ -48,30 +48,23 @@ class BasePromptFunction(Generic[P, R]):
 
     @property
     def functions(self) -> list[Callable[..., Any]]:
-        return self._functions.copy()
+        pass
 
     @property
     def stop(self) -> list[str] | None:
-        return copy.copy(self._stop)
+        pass
 
     @property
     def model(self) -> ChatModel:
-        if self._max_retries:
-            return RetryChatModel(
-                chat_model=self._model or get_chat_model(),
-                max_retries=self._max_retries,
-            )
-        return self._model or get_chat_model()
+        pass
 
     @property
     def return_types(self) -> list[type[R]]:
-        return self._return_types.copy()
+        pass
 
     def format(self, *args: P.args, **kwargs: P.kwargs) -> str:
         """Format the prompt template with the given arguments."""
-        bound_args = self._signature.bind(*args, **kwargs)
-        bound_args.apply_defaults()
-        return self._template.format(**bound_args.arguments)
+        pass
 
 
 class PromptFunction(BasePromptFunction[P, R], Generic[P, R]):
@@ -147,38 +140,4 @@ def prompt(
     >>> dudeify("Hello, how are you?")
     "Hey, dude! What's up? How's it going, my man?"
     """
-
-    def decorator(
-        func: Callable[P, Awaitable[R]] | Callable[P, R],
-    ) -> AsyncPromptFunction[P, R] | PromptFunction[P, R]:
-        func_signature = inspect.signature(func)
-
-        if inspect.iscoroutinefunction(func):
-            async_prompt_function = AsyncPromptFunction[P, R](
-                name=func.__name__,
-                parameters=list(func_signature.parameters.values()),
-                return_type=func_signature.return_annotation,
-                template=template,
-                functions=functions,
-                stop=stop,
-                max_retries=max_retries,
-                model=model,
-            )
-            return cast(
-                AsyncPromptFunction[P, R],
-                update_wrapper(async_prompt_function, func),
-            )
-
-        prompt_function = PromptFunction[P, R](
-            name=func.__name__,
-            parameters=list(func_signature.parameters.values()),
-            return_type=func_signature.return_annotation,
-            template=template,
-            functions=functions,
-            stop=stop,
-            max_retries=max_retries,
-            model=model,
-        )
-        return cast(PromptFunction[P, R], update_wrapper(prompt_function, func))
-
-    return cast(PromptDecorator, decorator)
+    pass

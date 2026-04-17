@@ -37,28 +37,16 @@ except ImportError as error:
 
 class LitellmStreamParser(StreamParser[ModelResponse]):
     def is_content(self, item: ModelResponse) -> bool:
-        assert isinstance(item.choices[0], StreamingChoices)
-        return bool(item.choices[0].delta.content)
+        pass
 
     def get_content(self, item: ModelResponse) -> str | None:
-        assert isinstance(item.choices[0], StreamingChoices)
-        assert isinstance(item.choices[0].delta.content, str | None)
-        return item.choices[0].delta.content
+        pass
 
     def is_tool_call(self, item: ModelResponse) -> bool:
-        assert isinstance(item.choices[0], StreamingChoices)
-        return bool(item.choices[0].delta.tool_calls)
+        pass
 
     def iter_tool_calls(self, item: ModelResponse) -> Iterable[FunctionCallChunk]:
-        assert isinstance(item.choices[0], StreamingChoices)
-        if item.choices and item.choices[0].delta.tool_calls:
-            for tool_call in item.choices[0].delta.tool_calls:
-                if tool_call.function:
-                    yield FunctionCallChunk(
-                        id=tool_call.id,
-                        name=tool_call.function.name,
-                        args=tool_call.function.arguments,
-                    )
+        pass
 
 
 class LitellmStreamState(StreamState[ModelResponse]):
@@ -71,32 +59,11 @@ class LitellmStreamState(StreamState[ModelResponse]):
 
     def update(self, item: ModelResponse) -> None:
         # Patch attributes required inside ChatCompletionStreamState.handle_chunk
-        if not hasattr(item, "usage"):
-            # litellm requires usage is not None for its total usage calculation
-            item.usage = litellm.Usage()  # type: ignore[attr-defined]
-        if not hasattr(item, "refusal"):
-            assert isinstance(item.choices[0], StreamingChoices)
-            item.choices[0].delta.refusal = None  # type: ignore[attr-defined]
-        self._chat_completion_stream_state.handle_chunk(item)  # type: ignore[arg-type]
-        usage = cast("litellm.Usage", item.usage)  # type: ignore[attr-defined,name-defined]
-        # Ignore usages with 0 tokens
-        if usage and usage.prompt_tokens and usage.completion_tokens:
-            assert not self.usage_ref
-            self.usage_ref.append(
-                Usage(
-                    input_tokens=usage.prompt_tokens,
-                    output_tokens=usage.completion_tokens,
-                )
-            )
+        pass
 
     @property
     def current_message_snapshot(self) -> Message[Any]:
-        snapshot = self._chat_completion_stream_state.current_completion_snapshot
-        message = snapshot.choices[0].message
-        # Fix incorrectly concatenated role
-        message.role = "assistant"
-        # TODO: Possible to return AssistantMessage here?
-        return _RawMessage(message.model_dump())
+        pass
 
 
 class LitellmChatModel(ChatModel):
@@ -123,31 +90,31 @@ class LitellmChatModel(ChatModel):
 
     @property
     def model(self) -> str:
-        return self._model
+        pass
 
     @property
     def api_base(self) -> str | None:
-        return self._api_base
+        pass
 
     @property
     def extra_headers(self) -> dict[str, str] | None:
-        return self._extra_headers
+        pass
 
     @property
     def max_tokens(self) -> int | None:
-        return self._max_tokens
+        pass
 
     @property
     def metadata(self) -> dict[str, Any] | None:
-        return self._metadata
+        pass
 
     @property
     def temperature(self) -> float | None:
-        return self._temperature
+        pass
 
     @property
     def custom_llm_provider(self) -> str | None:
-        return self._custom_llm_provider
+        pass
 
     @staticmethod
     def _get_tool_choice(
@@ -156,11 +123,7 @@ class LitellmChatModel(ChatModel):
         output_types: Iterable[type[OutputT]],
     ) -> ChatCompletionNamedToolChoiceParam | Literal["required"] | None:
         """Create the tool choice argument."""
-        if contains_string_type(output_types):
-            return None
-        if len(tool_schemas) == 1:
-            return tool_schemas[0].as_tool_choice()
-        return "required"
+        pass
 
     def complete(
         self,
@@ -171,37 +134,7 @@ class LitellmChatModel(ChatModel):
         stop: list[str] | None = None,
     ) -> AssistantMessage[OutputT]:
         """Request an LLM message."""
-        if output_types is None:
-            output_types = cast("Iterable[type[OutputT]]", [] if functions else [str])
-
-        function_schemas = get_function_schemas(functions, output_types)
-        tool_schemas = [BaseFunctionToolSchema(schema) for schema in function_schemas]
-
-        response = litellm.completion(
-            model=self.model,
-            messages=[message_to_openai_message(m) for m in messages],
-            api_base=self.api_base,
-            custom_llm_provider=self.custom_llm_provider,
-            extra_headers=self.extra_headers,
-            max_tokens=self.max_tokens,
-            metadata=self.metadata,
-            stop=stop,
-            stream=True,
-            # TODO: Add usage for LitellmChatModel
-            temperature=self.temperature,
-            tools=[schema.to_dict() for schema in tool_schemas] or None,
-            tool_choice=self._get_tool_choice(
-                tool_schemas=tool_schemas, output_types=output_types
-            ),  # type: ignore[arg-type,unused-ignore]
-        )
-        assert not isinstance(response, ModelResponse)
-        stream = OutputStream(
-            stream=response,
-            function_schemas=function_schemas,
-            parser=LitellmStreamParser(),
-            state=LitellmStreamState(),
-        )
-        return AssistantMessage(parse_stream(stream, output_types))
+        pass
 
     async def acomplete(
         self,
@@ -212,34 +145,4 @@ class LitellmChatModel(ChatModel):
         stop: list[str] | None = None,
     ) -> AssistantMessage[OutputT]:
         """Async version of `complete`."""
-        if output_types is None:
-            output_types = cast("Iterable[type[OutputT]]", [] if functions else [str])
-
-        function_schemas = get_async_function_schemas(functions, output_types)
-        tool_schemas = [BaseFunctionToolSchema(schema) for schema in function_schemas]
-
-        response = await litellm.acompletion(
-            model=self.model,
-            messages=[message_to_openai_message(m) for m in messages],
-            api_base=self.api_base,
-            custom_llm_provider=self.custom_llm_provider,
-            extra_headers=self.extra_headers,
-            max_tokens=self.max_tokens,
-            metadata=self.metadata,
-            stop=stop,
-            stream=True,
-            # TODO: Add usage for LitellmChatModel
-            temperature=self.temperature,
-            tools=[schema.to_dict() for schema in tool_schemas] or None,
-            tool_choice=self._get_tool_choice(
-                tool_schemas=tool_schemas, output_types=output_types
-            ),  # type: ignore[arg-type,unused-ignore]
-        )
-        assert not isinstance(response, ModelResponse)
-        stream = AsyncOutputStream(
-            stream=response,
-            function_schemas=function_schemas,
-            parser=LitellmStreamParser(),
-            state=LitellmStreamState(),
-        )
-        return AssistantMessage(await aparse_stream(stream, output_types))
+        pass

@@ -30,12 +30,7 @@ class RetryChatModel(ChatModel):
     # TODO: Catch UnknownToolError here
     @_make_retry_messages.register
     def _(self, error: ToolSchemaParseError) -> list[Message[Any]]:
-        return [
-            error.output_message,
-            ToolResultMessage(
-                content=str(error.validation_error), tool_call_id=error.tool_call_id
-            ),
-        ]
+        pass
 
     def complete(
         self,
@@ -46,34 +41,7 @@ class RetryChatModel(ChatModel):
         stop: list[str] | None = None,
     ) -> AssistantMessage[OutputT]:
         """Request an LLM message."""
-        with logfire.span(
-            "LLM-assisted retries enabled. Max {max_retries}",
-            max_retries=self._max_retries,
-        ):
-            messages = list(messages)
-            num_retry = 0
-            while True:
-                try:
-                    message = self._chat_model.complete(
-                        messages=messages,
-                        functions=functions,
-                        output_types=output_types,
-                        stop=stop,
-                    )
-                # TODO: Get list of caught exceptions from _make_retry_messages registered types
-                except ToolSchemaParseError as e:
-                    if num_retry >= self._max_retries:
-                        raise
-                    messages += self._make_retry_messages(e)
-                else:
-                    return message
-
-                num_retry += 1
-                # TODO: Also log using Python logger
-                logfire.warn(
-                    "Retrying Chat Completion. Attempt {num_retry}",
-                    num_retry=num_retry,
-                )
+        pass
 
     async def acomplete(
         self,
@@ -84,30 +52,4 @@ class RetryChatModel(ChatModel):
         stop: list[str] | None = None,
     ) -> AssistantMessage[OutputT]:
         """Async version of `complete`."""
-        with logfire.span(
-            "LLM-assisted retries enabled. Max {max_retries}",
-            max_retries=self._max_retries,
-        ):
-            messages = list(messages)
-            num_retry = 0
-            while True:
-                try:
-                    message = await self._chat_model.acomplete(
-                        messages=messages,
-                        functions=functions,
-                        output_types=output_types,
-                        stop=stop,
-                    )
-                except ToolSchemaParseError as e:
-                    if num_retry >= self._max_retries:
-                        raise
-                    messages += self._make_retry_messages(e)
-                else:
-                    return message
-
-                num_retry += 1
-                # TODO: Also log using Python logger
-                logfire.warn(
-                    "Retrying Chat Completion. Attempt {num_retry}",
-                    num_retry=num_retry,
-                )
+        pass

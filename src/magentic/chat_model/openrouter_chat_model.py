@@ -39,13 +39,7 @@ class OpenRouterStreamState(OpenaiStreamState):
         self.reasoning = ""
 
     def update(self, item: ChatCompletionChunk) -> None:
-        super().update(item)
-        if (
-            item.choices
-            and hasattr(item.choices[0].delta, "reasoning")
-            and item.choices[0].delta.reasoning
-        ):
-            self.reasoning += item.choices[0].delta.reasoning
+        pass
 
 
 class OpenRouterAssistantMessage(AssistantMessage[ContentT]):
@@ -65,9 +59,7 @@ class OpenRouterAssistantMessage(AssistantMessage[ContentT]):
         reasoning: str = "",
     ) -> "OpenRouterAssistantMessage[ContentT]":
         """Create a message with usage statistics."""
-        message = cls(content=content, reasoning=reasoning)
-        message._usage_ref = usage_ref
-        return message
+        pass
 
 
 class _OpenRouterOpenaiChatModel(OpenaiChatModel):
@@ -121,7 +113,7 @@ class _OpenRouterOpenaiChatModel(OpenaiChatModel):
         self._max_price = max_price
 
     def _get_stream_options(self) -> ChatCompletionStreamOptionsParam | openai.Omit:
-        return {"include_usage": True}
+        pass
 
     @staticmethod
     def _get_tool_choice(
@@ -133,61 +125,16 @@ class _OpenRouterOpenaiChatModel(OpenaiChatModel):
         | openai.Omit
         | ChatCompletionNamedToolChoiceParam
     ):
-        if contains_string_type(output_types):
-            return openai.omit
-        if len(tool_schemas) == 1:
-            return tool_schemas[0].as_tool_choice()
-        return "required"
+        pass
 
     def _get_parallel_tool_calls(
         self, *, tools_specified: bool, output_types: Iterable[type]
     ) -> bool | openai.Omit:
-        if not tools_specified:
-            return openai.omit
-        if contains_parallel_function_call_type(output_types):
-            return openai.omit
-        return False
+        pass
 
     def _get_extra_body(self) -> dict[str, Any] | None:
         """Get extra body parameters for OpenRouter API."""
-        extra_body: dict[str, Any] = {}
-        if self._route:
-            extra_body["route"] = self._route
-        if self._models:
-            extra_body["models"] = self._models
-
-        # Build provider object
-        provider: dict[str, Any] = {}
-        if self._provider_order:
-            provider["order"] = self._provider_order
-        if self._allow_fallbacks:
-            provider["allow_fallbacks"] = True
-        if self._data_collection:
-            provider["data_collection"] = self._data_collection
-        if self._provider_only:
-            provider["only"] = self._provider_only
-        if self._provider_ignore:
-            provider["ignore"] = self._provider_ignore
-        if self._quantizations:
-            provider["quantizations"] = self._quantizations
-        if self._provider_sort:
-            provider["sort"] = self._provider_sort
-        if self._max_price:
-            provider["max_price"] = self._max_price
-
-        if provider:
-            extra_body["provider"] = provider
-
-        # Build reasoning object
-        reasoning: dict[str, Any] = {}
-        if self._reasoning_effort:
-            reasoning["effort"] = self._reasoning_effort
-        if self._reasoning_exclude is not None:
-            reasoning["exclude"] = self._reasoning_exclude
-        if reasoning:
-            extra_body["reasoning"] = reasoning
-
-        return extra_body if extra_body else None
+        pass
 
     def complete(
         self,
@@ -198,43 +145,7 @@ class _OpenRouterOpenaiChatModel(OpenaiChatModel):
         stop: list[str] | None = None,
     ) -> OpenRouterAssistantMessage[OutputT]:
         """Request an LLM message."""
-        if output_types is None:
-            output_types = cast("Iterable[type[OutputT]]", [] if functions else [str])
-
-        function_schemas = get_function_schemas(functions, output_types)
-        tool_schemas = [BaseFunctionToolSchema(schema) for schema in function_schemas]
-
-        response: Iterator[ChatCompletionChunk] = self._client.chat.completions.create(
-            model=self.model,
-            messages=_add_missing_tool_calls_responses(
-                [message_to_openai_message(m) for m in messages]
-            ),
-            max_tokens=_if_given(self.max_tokens),
-            seed=_if_given(self.seed),
-            stop=_if_given(stop),
-            stream=True,
-            stream_options=self._get_stream_options(),
-            temperature=_if_given(self.temperature),
-            tools=[schema.to_dict() for schema in tool_schemas] or openai.omit,
-            tool_choice=self._get_tool_choice(
-                tool_schemas=tool_schemas, output_types=output_types
-            ),
-            parallel_tool_calls=self._get_parallel_tool_calls(
-                tools_specified=bool(tool_schemas), output_types=output_types
-            ),
-            extra_body=self._get_extra_body(),
-        )
-        stream = OutputStream(
-            response,
-            function_schemas=function_schemas,
-            parser=OpenaiStreamParser(),
-            state=OpenRouterStreamState(),
-        )
-        return OpenRouterAssistantMessage._with_usage(
-            parse_stream(stream, output_types),
-            usage_ref=stream.usage_ref,
-            reasoning=stream._state.reasoning if stream._state.reasoning else "",  # type: ignore[attr-defined]
-        )
+        pass
 
     async def acomplete(
         self,
@@ -245,45 +156,7 @@ class _OpenRouterOpenaiChatModel(OpenaiChatModel):
         stop: list[str] | None = None,
     ) -> OpenRouterAssistantMessage[OutputT]:
         """Async version of `complete`."""
-        if output_types is None:
-            output_types = [] if functions else cast("list[type[OutputT]]", [str])
-
-        function_schemas = get_async_function_schemas(functions, output_types)
-        tool_schemas = [BaseFunctionToolSchema(schema) for schema in function_schemas]
-
-        response: AsyncIterator[
-            ChatCompletionChunk
-        ] = await self._async_client.chat.completions.create(
-            model=self.model,
-            messages=_add_missing_tool_calls_responses(
-                [await async_message_to_openai_message(m) for m in messages]
-            ),
-            max_tokens=_if_given(self.max_tokens),
-            seed=_if_given(self.seed),
-            stop=_if_given(stop),
-            stream=True,
-            stream_options=self._get_stream_options(),
-            temperature=_if_given(self.temperature),
-            tools=[schema.to_dict() for schema in tool_schemas] or openai.omit,
-            tool_choice=self._get_tool_choice(
-                tool_schemas=tool_schemas, output_types=output_types
-            ),
-            parallel_tool_calls=self._get_parallel_tool_calls(
-                tools_specified=bool(tool_schemas), output_types=output_types
-            ),
-            extra_body=self._get_extra_body(),
-        )
-        stream = AsyncOutputStream(
-            response,
-            function_schemas=function_schemas,
-            parser=OpenaiStreamParser(),
-            state=OpenRouterStreamState(),
-        )
-        return OpenRouterAssistantMessage._with_usage(
-            await aparse_stream(stream, output_types),
-            usage_ref=stream.usage_ref,
-            reasoning=stream._state.reasoning if stream._state.reasoning else "",  # type: ignore[attr-defined]
-        )
+        pass
 
 
 class OpenRouterChatModel(ChatModel):
@@ -340,46 +213,43 @@ class OpenRouterChatModel(ChatModel):
 
     def _get_extra_body(self) -> dict[str, Any] | None:
         """Get extra body parameters for OpenRouter API."""
-        return self._openrouter_openai_chat_model._get_extra_body()
+        pass
 
     @property
     def model(self) -> str:
-        return self._openrouter_openai_chat_model.model
+        pass
 
     @property
     def api_key(self) -> str | None:
-        return self._openrouter_openai_chat_model.api_key
+        pass
 
     @property
     def base_url(self) -> str | None:
-        return self._openrouter_openai_chat_model.base_url
+        pass
 
     @property
     def max_tokens(self) -> int | None:
-        return self._openrouter_openai_chat_model.max_tokens
+        pass
 
     @property
     def seed(self) -> int | None:
-        return self._openrouter_openai_chat_model.seed
+        pass
 
     @property
     def temperature(self) -> float | None:
-        return self._openrouter_openai_chat_model.temperature
+        pass
 
     @property
     def route(self) -> Literal["fallback"] | None:
-        return self._openrouter_openai_chat_model._route
+        pass
 
     @property
     def models(self) -> list[str] | None:
-        return self._openrouter_openai_chat_model._models
+        pass
 
     @property
     def reasoning(self) -> dict[str, Any] | None:
-        return {
-            "effort": self._openrouter_openai_chat_model._reasoning_effort,
-            "exclude": self._openrouter_openai_chat_model._reasoning_exclude,
-        }
+        pass
 
     def complete(
         self,
@@ -390,12 +260,7 @@ class OpenRouterChatModel(ChatModel):
         stop: list[str] | None = None,
     ) -> OpenRouterAssistantMessage[OutputT]:
         """Request an LLM message."""
-        return self._openrouter_openai_chat_model.complete(
-            messages=messages,
-            functions=functions,
-            output_types=output_types,
-            stop=stop,
-        )
+        pass
 
     async def acomplete(
         self,
@@ -406,9 +271,4 @@ class OpenRouterChatModel(ChatModel):
         stop: list[str] | None = None,
     ) -> OpenRouterAssistantMessage[OutputT]:
         """Async version of `complete`."""
-        return await self._openrouter_openai_chat_model.acomplete(
-            messages=messages,
-            functions=functions,
-            output_types=output_types,
-            stop=stop,
-        )
+        pass

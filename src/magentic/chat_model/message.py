@@ -55,16 +55,7 @@ class Placeholder(BaseModel, Generic[PlaceholderTypeT]):
         super().__init__(type_=type_, name=name, **data)
 
     def format(self, **kwargs: Any) -> PlaceholderTypeT:
-        if self.name not in kwargs:
-            msg = f"Argument for {self.name!r} required by placeholder is missing"
-            raise ValueError(msg)
-        value = kwargs[self.name]
-        type_adapter: TypeAdapter[PlaceholderTypeT] = TypeAdapter(self.type_)
-        try:
-            return type_adapter.validate_python(value)
-        except ValidationError as e:
-            msg = f"Argument for {self.name!r} must match placeholder type {self.type_!r} or be coercible to it"
-            raise ValueError(msg) from e
+        pass
 
     if TYPE_CHECKING:
         # HACK: Allows us to define protocol `NotPlaceholder`
@@ -113,8 +104,7 @@ class _RawMessage(Message[ContentT], Generic[ContentT]):
     # TODO: Add Usage to _RawMessage
 
     def format(self, **kwargs: Any) -> "_RawMessage[ContentT]":
-        del kwargs
-        return _RawMessage(self.content)
+        pass
 
 
 class SystemMessage(Message[str]):
@@ -126,7 +116,7 @@ class SystemMessage(Message[str]):
         super().__init__(content=content, **data)
 
     def format(self, **kwargs: Any) -> "SystemMessage":
-        return SystemMessage(self.content.format(**kwargs))
+        pass
 
 
 # Anthropic supports PDF: https://docs.anthropic.com/en/docs/build-with-claude/pdf-support
@@ -139,27 +129,20 @@ class DocumentBytes(RootModel[bytes]):
 
     @cached_property
     def mime_type(self) -> DocumentMimeType:
-        mimetype: str | None = filetype.guess_mime(self.root)
-        assert mimetype in _DOCUMENT_MIME_TYPES
-        return cast(DocumentMimeType, mimetype)
+        pass
 
     def __init__(self, root: bytes, **data: Any):
         super().__init__(root=root, **data)
 
     def as_base64(self) -> str:
-        return base64.b64encode(self.root).decode("utf-8")
+        pass
 
     def format(self, **kwargs: Any) -> Self:
-        del kwargs
-        return self
+        pass
 
     @model_validator(mode="after")
     def _is_document_bytes(self) -> Self:
-        mimetype: str | None = filetype.guess_mime(self.root)
-        if mimetype not in _DOCUMENT_MIME_TYPES:
-            msg = f"Unsupported document MIME type: {mimetype!r}"
-            raise ValueError(msg)
-        return self
+        pass
 
 
 # OpenAI supports PNG, JPEG, WEBP, and non-animated GIF
@@ -173,32 +156,24 @@ class ImageBytes(RootModel[bytes]):
 
     @cached_property
     def mime_type(self) -> ImageMimeType:
-        mimetype: str | None = filetype.guess_mime(self.root)
-        assert mimetype in _IMAGE_MIME_TYPES
-        return cast(ImageMimeType, mimetype)
+        pass
 
     def as_base64(self) -> str:
-        return base64.b64encode(self.root).decode("utf-8")
+        pass
 
     def format(self, **kwargs: Any) -> Self:
-        del kwargs
-        return self
+        pass
 
     @model_validator(mode="after")
     def _is_image_bytes(self) -> Self:
-        mimetype: str | None = filetype.guess_mime(self.root)
-        if mimetype not in _IMAGE_MIME_TYPES:
-            msg = f"Unsupported image MIME type: {mimetype!r}"
-            raise ValueError(msg)
-        return self
+        pass
 
 
 class ImageUrl(RootModel[str]):
     """String representing a URL to an image."""
 
     def format(self, **kwargs: Any) -> Self:
-        del kwargs
-        return self
+        pass
 
 
 UserMessageContentBlock: TypeAlias = DocumentBytes | ImageBytes | ImageUrl
@@ -240,12 +215,7 @@ class UserMessage(Message[UserMessageContentT], Generic[UserMessageContentT]):
         self: "UserMessage[StrT | NonStringSequence[StrT2 | UserMessageContentBlockT | Placeholder[UserMessageContentBlockT2]]]",
         **kwargs: Any,
     ) -> "UserMessage[StrT | Sequence[StrT2 | UserMessageContentBlockT | UserMessageContentBlockT2]]":
-        if isinstance(self.content, str):
-            return UserMessage(self.content.format(**kwargs))
-        if isinstance(self.content, Iterable):
-            return UserMessage([block.format(**kwargs) for block in self.content])  # type: ignore[misc]
-        msg = f"Unsupported content type: {type(self.content)}"
-        raise ValueError(msg)
+        pass
 
 
 class Usage(NamedTuple):
@@ -270,15 +240,11 @@ class AssistantMessage(Message[ContentT], Generic[ContentT]):
 
     @classmethod
     def _with_usage(cls, content: ContentT, usage_ref: list[Usage]) -> Self:  # type: ignore[misc]
-        message = cls(content)
-        message._usage_ref = usage_ref
-        return message
+        pass
 
     @property
     def usage(self) -> Usage | None:
-        if self._usage_ref:
-            return self._usage_ref[0]
-        return None
+        pass
 
     @overload
     def format(
@@ -305,11 +271,7 @@ class AssistantMessage(Message[ContentT], Generic[ContentT]):
     def format(
         self: "AssistantMessage[str | NotPlaceholderT | Placeholder[T]]", **kwargs: Any
     ) -> "AssistantMessage[str | NotPlaceholderT | T]":
-        if isinstance(self.content, str):
-            return AssistantMessage(self.content.format(**kwargs))
-        if isinstance(self.content, Placeholder):
-            return AssistantMessage(self.content.format(**kwargs))
-        return AssistantMessage(self.content)
+        pass
 
 
 class ToolResultMessage(Message[ContentT], Generic[ContentT]):
@@ -325,8 +287,7 @@ class ToolResultMessage(Message[ContentT], Generic[ContentT]):
         return f"{self.__class__.__name__}({self.content!r}, {self.tool_call_id=!r})"
 
     def format(self, **kwargs: Any) -> "ToolResultMessage[ContentT]":
-        del kwargs
-        return ToolResultMessage(self.content, self.tool_call_id)
+        pass
 
 
 class FunctionResultMessage(ToolResultMessage[ContentT], Generic[ContentT]):
@@ -363,11 +324,10 @@ class FunctionResultMessage(ToolResultMessage[ContentT], Generic[ContentT]):
     def function_call(
         self,
     ) -> FunctionCall[Awaitable[ContentT]] | FunctionCall[ContentT]:
-        return self._function_call
+        pass
 
     def format(self, **kwargs: Any) -> "FunctionResultMessage[ContentT]":
-        del kwargs
-        return FunctionResultMessage(self.content, self._function_call)
+        pass
 
 
 AnyMessage = Annotated[

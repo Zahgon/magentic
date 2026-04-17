@@ -22,7 +22,7 @@ def _create_unique_id() -> str:
     # Mistral requires length of 9 chars for tool call IDs
     # OpenAI allows max length of 29 chars
     # Take last 9 chars so testing can use incremental IDs
-    return uuid4().hex[-9:]
+    pass
 
 
 class FunctionCall(Generic[T]):
@@ -66,13 +66,11 @@ class FunctionCall(Generic[T]):
 
     @property
     def function(self):
-        return self._function
+        pass
 
     @property
     def arguments(self) -> dict[str, Any]:
-        signature = inspect.signature(self._function)
-        bound_args = signature.bind(*self._args, **self._kwargs)
-        return bound_args.arguments.copy()
+        pass
 
 
 class ParallelFunctionCall(Generic[T]):

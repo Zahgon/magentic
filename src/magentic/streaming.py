@@ -17,18 +17,14 @@ async def async_iter(iterable: Iterable[T]) -> AsyncIterator[T]:
 
 def apply(func: Callable[[T], Any], iterable: Iterable[T]) -> Iterator[T]:
     """Apply a function to each item in an iterable and yield the original item."""
-    for chunk in iterable:
-        func(chunk)
-        yield chunk
+    pass
 
 
 async def aapply(
     func: Callable[[T], Any], aiterable: AsyncIterable[T]
 ) -> AsyncIterator[T]:
     """Async version of `apply`."""
-    async for chunk in aiterable:
-        func(chunk)
-        yield chunk
+    pass
 
 
 async def azip(*aiterables: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
@@ -45,81 +41,48 @@ async def azip(*aiterables: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
 
 async def achain(*aiterables: AsyncIterable[T]) -> AsyncIterator[T]:
     """Async version of `itertools.chain`."""
-    for aiterable in aiterables:
-        async for item in aiterable:
-            yield item
+    pass
 
 
 def peek(iterator: Iterator[T]) -> tuple[T, Iterator[T]]:
     """Returns the first item in the Iterator and a copy of the Iterator."""
-    first_item = next(iterator)
-    return first_item, chain([first_item], iterator)
+    pass
 
 
 async def apeek(aiterator: AsyncIterator[T]) -> tuple[T, AsyncIterator[T]]:
     """Async version of `peek`."""
-    first_item = await anext(aiterator)
-    return first_item, achain(async_iter([first_item]), aiterator)
+    pass
 
 
 async def adropwhile(
     predicate: Callable[[T], object], aiterable: AsyncIterable[T]
 ) -> AsyncIterator[T]:
     """Async version of `itertools.dropwhile`."""
-    aiterator = aiter(aiterable)
-    async for item in aiterator:
-        if not predicate(item):
-            yield item
-            break
-    async for item in aiterator:
-        yield item
+    pass
 
 
 async def atakewhile(
     predicate: Callable[[T], object], aiterable: AsyncIterable[T]
 ) -> AsyncIterator[T]:
     """Async version of `itertools.takewhile`."""
-    async for item in aiterable:
-        if not predicate(item):
-            break
-        yield item
+    pass
 
 
 def consume(iterator: Iterable[T]) -> None:
     """Consume an iterator."""
-    collections.deque(iterator, maxlen=0)
+    pass
 
 
 async def aconsume(aiterable: AsyncIterable[T]) -> None:
     """Async version of `consume`."""
-    async for _ in aiterable:
-        pass
+    pass
 
 
 async def agroupby(
     aiterable: AsyncIterable[T], key: Callable[[T], object]
 ) -> AsyncIterator[tuple[object, AsyncIterator[T]]]:
     """Async version of `itertools.groupby`."""
-    aiterator = aiter(aiterable)
-    transition = [await anext(aiterator)]
-
-    async def agroup(
-        aiterator: AsyncIterator[T], group_key: object
-    ) -> AsyncIterator[T]:
-        async for item in aiterator:
-            if key(item) != group_key:
-                transition.append(item)
-                return
-            yield item
-
-    while transition:
-        transition_item = transition.pop()
-        group_key = key(transition_item)
-        aiterator = achain(async_iter([transition_item]), aiterator)
-        yield (group_key, agroup(aiterator, group_key))
-        # Finish the group to allow advancing to the next one
-        if not transition:
-            await aconsume(agroup(aiterator, group_key))
+    pass
 
 
 @dataclass
@@ -133,31 +96,7 @@ class JsonArrayParserState:
     is_element_separator: bool = False
 
     def update(self, char: str) -> None:
-        if self.in_string:
-            if char == '"' and not self.is_escaped:
-                self.in_string = False
-        elif char == '"':
-            self.in_string = True
-        elif char == ",":
-            if self.array_level == 1 and self.object_level == 0:
-                self.is_element_separator = True
-                return
-        elif char == "[":
-            self.array_level += 1
-        elif char == "]":
-            self.array_level -= 1
-            if self.array_level == 0:
-                self.is_element_separator = True
-                return
-        elif char == "{":
-            self.object_level += 1
-        elif char == "}":
-            self.object_level -= 1
-        elif char == "\\":
-            self.is_escaped = not self.is_escaped
-        else:
-            self.is_escaped = False
-        self.is_element_separator = False
+        pass
 
 
 def iter_streamed_json_array(chunks: Iterable[str]) -> Iterable[str]:
@@ -165,48 +104,12 @@ def iter_streamed_json_array(chunks: Iterable[str]) -> Iterable[str]:
 
     This ignores all characters before the start of the first array i.e. the first "["
     """
-    iter_chars: Iterator[str] = chain.from_iterable(chunks)
-    parser_state = JsonArrayParserState()
-
-    iter_chars = dropwhile(lambda x: x != "[", iter_chars)
-    parser_state.update(next(iter_chars))
-
-    item_chars: list[str] = []
-    for char in iter_chars:
-        parser_state.update(char)
-        if parser_state.is_element_separator:
-            if item_chars:
-                yield "".join(item_chars).strip()
-                item_chars = []
-        else:
-            item_chars.append(char)
+    pass
 
 
 async def aiter_streamed_json_array(chunks: AsyncIterable[str]) -> AsyncIterable[str]:
     """Async version of `iter_streamed_json_array`."""
-
-    async def chars_generator() -> AsyncIterable[str]:
-        async for chunk in chunks:
-            for char in chunk:
-                yield char
-
-    iter_chars = chars_generator()
-    parser_state = JsonArrayParserState()
-
-    async for char in iter_chars:
-        if char == "[":
-            break
-    parser_state.update("[")
-
-    item_chars: list[str] = []
-    async for char in iter_chars:
-        parser_state.update(char)
-        if parser_state.is_element_separator:
-            if item_chars:
-                yield "".join(item_chars).strip()
-                item_chars = []
-        else:
-            item_chars.append(char)
+    pass
 
 
 class CachedIterable(Iterable[T]):
@@ -254,18 +157,11 @@ class StreamedStr(Iterable[str]):
 
     def to_string(self) -> str:
         """Convert the streamed string to a string."""
-        return str(self)
+        pass
 
     def truncate(self, length: int) -> str:
         """Truncate the streamed string to the specified length."""
-        chunks = []
-        current_length = 0
-        for chunk in self._chunks:
-            chunks.append(chunk)
-            current_length += len(chunk)
-            if current_length > length:
-                break
-        return textwrap.shorten("".join(chunks), width=length)
+        pass
 
 
 class AsyncStreamedStr(AsyncIterable[str]):
@@ -280,15 +176,8 @@ class AsyncStreamedStr(AsyncIterable[str]):
 
     async def to_string(self) -> str:
         """Convert the streamed string to a string."""
-        return "".join([item async for item in self])
+        pass
 
     async def truncate(self, length: int) -> str:
         """Truncate the streamed string to the specified length."""
-        chunks = []
-        current_length = 0
-        async for chunk in self._chunks:
-            chunks.append(chunk)
-            current_length += len(chunk)
-            if current_length > length:
-                break
-        return textwrap.shorten("".join(chunks), width=length)
+        pass

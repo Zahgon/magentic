@@ -9,19 +9,8 @@ from magentic.typing import is_any_origin_subclass
 
 
 def contains_string_type(types: Iterable[type]) -> bool:
-    return is_any_origin_subclass(
-        types,
-        (str, StreamedStr, AsyncStreamedStr, StreamedResponse, AsyncStreamedResponse),
-    )
+    pass
 
 
 def contains_parallel_function_call_type(types: Iterable[type]) -> bool:
-    return is_any_origin_subclass(
-        types,
-        (
-            ParallelFunctionCall,
-            AsyncParallelFunctionCall,
-            StreamedResponse,
-            AsyncStreamedResponse,
-        ),
-    )
+    pass
